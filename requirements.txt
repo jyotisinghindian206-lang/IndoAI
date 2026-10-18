@@ -1,0 +1,15 @@
+
+fastapi
+uvicorn
+google-genai
+pydantic
+starlette
+reportlab
+pypdf
+python-docx
+openpyxl
+python-pptx
+edge-tts
+gTTS
+python-multipart
+Pillow
