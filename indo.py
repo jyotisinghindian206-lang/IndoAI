@@ -16983,6 +16983,100 @@ indoApplyCodeHighlighting();
 
 
 </body>
+
+<script>
+/* Indo AI account UI sync: use the server session as the source of truth. */
+(function () {
+  'use strict';
+
+  async function syncIndoAccountUI() {
+    try {
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) return;
+      const account = await response.json();
+      if (!account || typeof account.signed_in !== 'boolean') return;
+
+      const byId = id => document.getElementById(id);
+      const signedIn = account.signed_in;
+      const name = String(account.display_name || account.name || account.email || 'Account').trim();
+      const email = String(account.email || '').trim();
+      const provider = account.provider === 'indo' ? 'Indo account' : 'Google account';
+      const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
+        .map(part => Array.from(part)[0] || '').join('').toUpperCase() || 'YOU';
+
+      const top = byId('indoTopLoginBtn');
+      if (top) {
+        top.textContent = signedIn ? initials + ' · ' + name : 'Log in';
+        top.title = signedIn ? 'Open account options' : 'Log in or create an Indo account';
+        top.style.display = 'inline-flex';
+      }
+
+      const sideName = byId('indoSidebarAccountName');
+      const sideSubtitle = byId('indoSidebarAccountSubtitle');
+      const sideAvatar = byId('indoSidebarAvatar');
+      const modalName = byId('indoModalName');
+      const modalEmail = byId('indoModalEmail');
+      const modalAvatar = byId('indoModalAvatar');
+      if (sideName) sideName.textContent = signedIn ? name : 'Guest';
+      if (sideSubtitle) sideSubtitle.textContent = signedIn ? (email || provider) : 'Sign in to your account';
+      if (sideAvatar) sideAvatar.textContent = signedIn ? initials : 'YOU';
+      if (modalName) modalName.textContent = signedIn ? name : 'Guest';
+      if (modalEmail) modalEmail.textContent = signedIn ? (email || provider) : 'Not signed in';
+      if (modalAvatar) modalAvatar.textContent = signedIn ? initials : 'YOU';
+
+      const loginPanel = byId('indoAccountLoginPanel');
+      const signedPanel = byId('indoAccountSignedInPanel');
+      if (loginPanel) loginPanel.hidden = signedIn;
+      if (signedPanel) signedPanel.hidden = !signedIn;
+
+      const musicStatus = byId('indoMusicAccountStatus');
+      const google = byId('indoMusicSignIn');
+      const musicLogout = byId('indoMusicSignOut');
+      const username = byId('indoAccountUsername');
+      const password = byId('indoAccountPassword');
+      const musicLogin = byId('indoAccountLogin');
+      const register = byId('indoAccountRegister');
+      if (musicStatus && signedIn) musicStatus.textContent = 'Signed in as ' + name + (email ? ' (' + email + ')' : '') + '.';
+      if (google) google.style.display = signedIn ? 'none' : 'inline-flex';
+      if (username) username.style.display = signedIn ? 'none' : 'inline-block';
+      if (password) password.style.display = signedIn ? 'none' : 'inline-block';
+      if (musicLogin) musicLogin.style.display = signedIn ? 'none' : 'inline-flex';
+      if (register) register.style.display = signedIn ? 'none' : 'inline-flex';
+      if (musicLogout) musicLogout.style.display = signedIn ? 'inline-flex' : 'none';
+
+      document.querySelectorAll('.message.user .user-avatar').forEach(element => {
+        element.textContent = signedIn ? initials : 'YOU';
+        element.setAttribute('aria-label', signedIn ? name + ' initials' : 'Your message');
+      });
+    } catch (error) {
+      console.warn('[Indo account] Could not sync account UI.', error);
+    }
+  }
+
+  function scheduleSync() {
+    syncIndoAccountUI();
+    // Some UI elements are initialized by later scripts; re-sync briefly after load.
+    window.setTimeout(syncIndoAccountUI, 800);
+    window.setTimeout(syncIndoAccountUI, 2200);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scheduleSync, { once: true });
+  } else {
+    scheduleSync();
+  }
+  window.addEventListener('pageshow', scheduleSync);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) syncIndoAccountUI();
+  });
+})();
+</script>
+
 </html>
 """
 # ============================================================
