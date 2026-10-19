@@ -16924,6 +16924,63 @@ indoApplyCodeHighlighting();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{placeMoreOnTop();initMiniDockDrag();},{once:true});else{placeMoreOnTop();initMiniDockDrag();}
 })();
 </script>
+<script>
+/* Isolated fallback for account buttons if an earlier UI script fails. */
+(function () {
+  'use strict';
+  const byId = id => document.getElementById(id);
+
+  function openIndoAccountModal(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const modal = byId('indoAccountModal');
+    if (!modal) {
+      console.error('[Indo login] Account modal element is missing.');
+      return false;
+    }
+    modal.classList.add('open');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('visibility', 'visible', 'important');
+    modal.style.setProperty('opacity', '1', 'important');
+    modal.style.setProperty('pointer-events', 'auto', 'important');
+    modal.style.setProperty('z-index', '2147483646', 'important');
+    const status = byId('indoModalStatus');
+    if (status) status.textContent = '';
+    return false;
+  }
+
+  // Also supplies the global function expected by the top-bar inline onclick.
+  window.indoOpenAccountModal = openIndoAccountModal;
+
+  // Capture account clicks before other UI listeners can swallow them.
+  document.addEventListener('click', function (event) {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    if (target.closest('#indoTopLoginBtn, #indoSidebarAccount')) {
+      openIndoAccountModal(event);
+      return;
+    }
+    const googleLink = target.closest('#indoModalGoogleLogin, #indoMusicSignIn');
+    if (googleLink) {
+      const href = googleLink.getAttribute('href');
+      if (href && href.startsWith('/auth/google/login')) {
+        event.preventDefault();
+        event.stopPropagation();
+        window.location.assign(new URL(href, window.location.origin).href);
+      }
+    }
+  }, true);
+
+  ['indoTopLoginBtn', 'indoSidebarAccount', 'indoModalGoogleLogin', 'indoMusicSignIn']
+    .forEach(id => {
+      const el = byId(id);
+      if (el) el.style.setProperty('pointer-events', 'auto', 'important');
+    });
+})();
+</script>
+
 
 </body>
 </html>
