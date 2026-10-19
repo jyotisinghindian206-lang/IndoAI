@@ -17143,6 +17143,161 @@ indoApplyCodeHighlighting();
 })();
 </script>
 
+<script>
+(function () {
+  "use strict";
+
+  if (window.__indoFeatureRecovery) return;
+  window.__indoFeatureRecovery = true;
+
+  const get = id => document.getElementById(id);
+
+  function closeMore() {
+    const menu = get("indoMoreFloatMenu");
+    const btn = get("indoMoreFloatBtn");
+
+    if (menu) {
+      menu.classList.remove("open");
+      menu.hidden = true;
+      menu.style.setProperty("display", "none", "important");
+      menu.style.setProperty("pointer-events", "none", "important");
+    }
+
+    if (btn) btn.setAttribute("aria-expanded", "false");
+  }
+
+  function openMore() {
+    const menu = get("indoMoreFloatMenu");
+    const btn = get("indoMoreFloatBtn");
+
+    if (!menu) {
+      console.error("[Indo] More menu element not found.");
+      return;
+    }
+
+    const isOpen =
+      menu.classList.contains("open") &&
+      getComputedStyle(menu).display !== "none";
+
+    if (isOpen) {
+      closeMore();
+    } else {
+      menu.hidden = false;
+      menu.classList.add("open");
+      menu.style.removeProperty("display");
+      menu.style.removeProperty("pointer-events");
+      menu.style.setProperty("visibility", "visible", "important");
+      menu.style.setProperty("opacity", "1", "important");
+
+      if (btn) btn.setAttribute("aria-expanded", "true");
+    }
+  }
+
+  function repairAccountOverlay() {
+    const modal = get("indoAccountModal");
+    if (!modal || modal.classList.contains("open")) return;
+
+    [
+      "display",
+      "visibility",
+      "opacity",
+      "pointer-events",
+      "z-index"
+    ].forEach(prop => modal.style.removeProperty(prop));
+  }
+
+  function launchMusic() {
+    closeMore();
+
+    // Prefer the original Indo music launcher if one exists.
+    if (typeof window.indoLaunchMusic === "function") {
+      window.indoLaunchMusic();
+      return;
+    }
+
+    // Otherwise reveal the existing music panel without rebuilding it.
+    const panel = get("indoMusicOverlay");
+
+    if (panel) {
+      panel.classList.add("show");
+      panel.setAttribute("aria-hidden", "false");
+      panel.style.removeProperty("display");
+      panel.style.removeProperty("visibility");
+      panel.style.removeProperty("pointer-events");
+      return;
+    }
+
+    console.error("[Indo] Music panel/launcher not found.");
+    alert("Indo Music could not open. Check the music panel ID in indo.py.");
+  }
+
+  function launchChess() {
+    closeMore();
+
+    if (typeof window.indoLaunchChess === "function") {
+      window.indoLaunchChess();
+      return;
+    }
+
+    // Don't invent a replacement board; report the missing original launcher.
+    console.error("[Indo] Chess launcher not exposed as window.indoLaunchChess.");
+    alert(
+      "Indo Chess could not open. Its existing chess launcher needs to be reconnected."
+    );
+  }
+
+  function bind() {
+    repairAccountOverlay();
+
+    const more = get("indoMoreFloatBtn");
+    const music = get("indoMoreFloatMusic");
+    const chess = get("indoMoreFloatChess");
+
+    if (more && more.dataset.recoveryBound !== "1") {
+      more.dataset.recoveryBound = "1";
+      more.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        openMore();
+      }, true);
+    }
+
+    if (music && music.dataset.recoveryBound !== "1") {
+      music.dataset.recoveryBound = "1";
+      music.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        launchMusic();
+      }, true);
+    }
+
+    if (chess && chess.dataset.recoveryBound !== "1") {
+      chess.dataset.recoveryBound = "1";
+      chess.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        launchChess();
+      }, true);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bind, { once: true });
+  } else {
+    bind();
+  }
+
+  // Support menu controls rendered later by Indo.
+  const observer = new MutationObserver(bind);
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+  setTimeout(() => observer.disconnect(), 15000);
+
+})();
+</script>
+
 
 </html>
 """
