@@ -17077,6 +17077,73 @@ indoApplyCodeHighlighting();
 })();
 </script>
 
+<script>
+/* Indo AI More-menu recovery: isolate the trigger from conflicting click handlers. */
+(function () {
+  'use strict';
+
+  function byId(id) { return document.getElementById(id); }
+
+  function setMoreMenuOpen(open) {
+    const wrap = byId('indoMoreFloatWrap');
+    const menu = byId('indoMoreFloatMenu');
+    const button = byId('indoMoreFloatBtn');
+    if (!wrap || !menu || !button) {
+      console.error('[Indo More] Required menu element is missing.', {
+        wrap: !!wrap, menu: !!menu, button: !!button
+      });
+      return;
+    }
+
+    // Keep the floating controls above the chat without changing their contents.
+    if (wrap.parentElement !== document.body) document.body.appendChild(wrap);
+    Object.assign(wrap.style, {
+      position: 'fixed', right: '20px', bottom: '20px',
+      zIndex: '2147483647', pointerEvents: 'auto',
+      visibility: 'visible', opacity: '1', display: 'flex',
+      flexDirection: 'column', alignItems: 'flex-end', gap: '9px'
+    });
+    wrap.style.setProperty('transform', 'none', 'important');
+
+    menu.hidden = !open;
+    menu.classList.toggle('open', open);
+    menu.style.setProperty('display', open ? 'flex' : 'none', 'important');
+    menu.style.setProperty('visibility', open ? 'visible' : 'hidden', 'important');
+    menu.style.setProperty('opacity', open ? '1' : '0', 'important');
+    menu.style.setProperty('pointer-events', open ? 'auto' : 'none', 'important');
+    menu.style.setProperty('position', 'relative', 'important');
+    menu.style.setProperty('z-index', '2147483647', 'important');
+    button.setAttribute('aria-expanded', String(open));
+  }
+
+  // Capture only the More trigger. Avoid double-toggling from its old inline handler.
+  document.addEventListener('click', function (event) {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target && target.closest('#indoMoreFloatBtn');
+    if (!button) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    const menu = byId('indoMoreFloatMenu');
+    const shouldOpen = !!menu && (menu.hidden || !menu.classList.contains('open'));
+    setMoreMenuOpen(shouldOpen);
+  }, true);
+
+  // Keep menu state accurate if the user clicks outside the floating wrapper.
+  document.addEventListener('click', function (event) {
+    const wrap = byId('indoMoreFloatWrap');
+    if (wrap && !wrap.contains(event.target)) setMoreMenuOpen(false);
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') setMoreMenuOpen(false);
+  });
+})();
+</script>
+
+
 </html>
 """
 # ============================================================
